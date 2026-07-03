@@ -46,8 +46,8 @@ function pctColor(v) {
 }
 
 function pctHtmlColor(v) {
-  if (v > 0) return '#16a34a';
-  if (v < 0) return '#dc2626';
+  if (v > 0) return '#dc2626';
+  if (v < 0) return '#16a34a';
   return '#6b7280';
 }
 

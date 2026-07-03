@@ -14,8 +14,8 @@
           colors: {
             primary: '#1e3a5f',
             accent: '#2563eb',
-            rise: '#16a34a',
-            fall: '#dc2626',
+            rise: '#dc2626',
+            fall: '#16a34a',
           }
         }
       }
@@ -79,7 +79,7 @@
           <div id="strategyConfig" class="hidden space-y-3 border-t pt-3">
             <h3 class="text-sm font-bold text-gray-700">策略参数</h3>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">涨幅超过 <span id="risePctVal" class="font-bold text-fall">3</span>% 时卖出</label>
+              <label class="block text-xs text-gray-500 mb-1">涨幅超过 <span id="risePctVal" class="font-bold text-rise">3</span>% 时卖出</label>
               <input id="risePct" type="range" min="1" max="10" step="0.5" value="3" class="w-full">
             </div>
             <div>
@@ -87,7 +87,7 @@
               <input id="sellRatio" type="range" min="10" max="100" step="5" value="50" class="w-full">
             </div>
             <div>
-              <label class="block text-xs text-gray-500 mb-1">跌幅超过 <span id="dropPctVal" class="font-bold text-rise">3</span>% 时买入</label>
+              <label class="block text-xs text-gray-500 mb-1">跌幅超过 <span id="dropPctVal" class="font-bold text-fall">3</span>% 时买入</label>
               <input id="dropPct" type="range" min="1" max="10" step="0.5" value="3" class="w-full">
             </div>
             <div>
@@ -164,8 +164,8 @@
           <!-- 每日操作模式按钮 -->
           <div id="dailyActions" class="space-y-2">
             <div class="flex gap-2">
-              <button id="buyBtn" class="flex-1 bg-rise hover:bg-green-700 text-white font-bold py-2 rounded-lg transition-colors text-sm">买入</button>
-              <button id="sellBtn" class="flex-1 bg-fall hover:bg-red-700 text-white font-bold py-2 rounded-lg transition-colors text-sm">卖出</button>
+              <button id="buyBtn" class="flex-1 bg-rise hover:bg-red-700 text-white font-bold py-2 rounded-lg transition-colors text-sm">买入</button>
+              <button id="sellBtn" class="flex-1 bg-fall hover:bg-green-700 text-white font-bold py-2 rounded-lg transition-colors text-sm">卖出</button>
               <button id="holdBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition-colors text-sm">持有</button>
             </div>
 
@@ -294,7 +294,7 @@
           </div>
           <div class="bg-gray-50 rounded-lg p-4 text-center">
             <div class="text-xs text-gray-400 mb-1">最大回撤</div>
-            <div class="text-lg font-bold text-fall" id="resultMaxDrawdown">--</div>
+            <div class="text-lg font-bold text-rise" id="resultMaxDrawdown">--</div>
           </div>
           <div class="bg-gray-50 rounded-lg p-4 text-center">
             <div class="text-xs text-gray-400 mb-1">交易次数</div>
