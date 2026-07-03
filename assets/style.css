@@ -1,0 +1,80 @@
+/* FundSim Game 自定义样式 */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+/* 模式按钮激活态 */
+.mode-btn {
+  cursor: pointer;
+}
+
+/* 滑块样式 */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #1d4ed8;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2563eb;
+  cursor: pointer;
+  border: none;
+}
+
+/* 日期输入框样式 */
+input[type="date"] {
+  cursor: pointer;
+}
+
+/* 交易记录滚动条 */
+#tradeLog::-webkit-scrollbar {
+  width: 4px;
+}
+
+#tradeLog::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#tradeLog::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+/* 卡片悬浮效果 */
+.bg-white.rounded-xl.shadow-sm {
+  transition: box-shadow 0.2s;
+}
+
+/* 数字字体 */
+.font-bold {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+  #gamePanel {
+    gap: 1rem;
+  }
+}

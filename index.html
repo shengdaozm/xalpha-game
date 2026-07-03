@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FundSim Game - 基金历史行情模拟投资游戏</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1e3a5f',
+            accent: '#2563eb',
+            rise: '#16a34a',
+            fall: '#dc2626',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- 顶部导航栏 -->
+  <nav class="bg-primary text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center gap-3">
+        <h1 class="text-xl font-bold">FundSim Game</h1>
+        <span class="text-sm text-blue-200 hidden sm:inline">基金历史行情模拟投资</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex bg-white/10 rounded-lg p-0.5">
+          <button id="modeDailyBtn" class="mode-btn px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-white text-primary">每日操作</button>
+          <button id="modeStrategyBtn" class="mode-btn px-4 py-1.5 rounded-md text-sm font-medium transition-all text-blue-100">策略投递</button>
+        </div>
+        <button id="rulesBtn" class="text-sm text-blue-200 hover:text-white transition-colors">
+          <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          规则
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- 未开始时的配置面板 -->
+    <div id="setupPanel" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- 左侧控制面板 -->
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-white rounded-xl shadow-sm p-5 space-y-4">
+          <h2 class="text-lg font-bold text-gray-800 border-b pb-2">游戏设置</h2>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">选择基金</label>
+            <select id="fundSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent"></select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">开始日期</label>
+              <input id="startDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">结束日期</label>
+              <input id="endDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">初始本金 (元)</label>
+            <input id="initialCash" type="number" value="10000" min="100" step="100" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-accent focus:border-transparent">
+          </div>
+
+          <!-- 策略投递模式专用配置 -->
+          <div id="strategyConfig" class="hidden space-y-3 border-t pt-3">
+            <h3 class="text-sm font-bold text-gray-700">策略参数</h3>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">涨幅超过 <span id="risePctVal" class="font-bold text-fall">3</span>% 时卖出</label>
+              <input id="risePct" type="range" min="1" max="10" step="0.5" value="3" class="w-full">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">卖出仓位比例: <span id="sellRatioVal" class="font-bold text-gray-700">50</span>%</label>
+              <input id="sellRatio" type="range" min="10" max="100" step="5" value="50" class="w-full">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">跌幅超过 <span id="dropPctVal" class="font-bold text-rise">3</span>% 时买入</label>
+              <input id="dropPct" type="range" min="1" max="10" step="0.5" value="3" class="w-full">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1">买入现金比例: <span id="buyRatioVal" class="font-bold text-gray-700">50</span>%</label>
+              <input id="buyRatio" type="range" min="10" max="100" step="5" value="50" class="w-full">
+            </div>
+          </div>
+
+          <button id="startBtn" class="w-full bg-accent hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-colors">
+            开始游戏
+          </button>
+        </div>
+      </div>
+
+      <!-- 右侧介绍区 -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm p-8 h-full flex flex-col items-center justify-center text-center">
+          <div class="text-6xl mb-4">📊</div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-3">基金历史行情模拟投资</h2>
+          <p class="text-gray-500 max-w-md mb-6">使用真实基金历史净值数据，体验基金投资的酸甜苦辣。选择模式开始你的投资之旅吧！</p>
+          <div class="grid grid-cols-2 gap-4 max-w-lg w-full">
+            <div class="bg-blue-50 rounded-lg p-4 text-left">
+              <div class="text-2xl mb-1">🎮</div>
+              <h3 class="font-bold text-gray-700 text-sm">每日操作模式</h3>
+              <p class="text-xs text-gray-500 mt-1">逐天推进，手动决定买入、卖出或持有。考验你的择时能力！</p>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-4 text-left">
+              <div class="text-2xl mb-1">🤖</div>
+              <h3 class="font-bold text-gray-700 text-sm">策略投递模式</h3>
+              <p class="text-xs text-gray-500 mt-1">预设自动交易策略，一键回测。看看你的策略能否跑赢市场！</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 游戏进行中的面板 -->
+    <div id="gamePanel" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- 左侧控制面板 -->
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-white rounded-xl shadow-sm p-5 space-y-3">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h2 class="text-lg font-bold text-gray-800" id="gameFundName">--</h2>
+            <button id="resetBtn" class="text-xs text-gray-400 hover:text-red-500 transition-colors">重置</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div class="bg-gray-50 rounded-lg p-2">
+              <div class="text-xs text-gray-400">当前日期</div>
+              <div class="font-bold text-gray-700" id="currentDate">--</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-2">
+              <div class="text-xs text-gray-400">游戏进度</div>
+              <div class="font-bold text-gray-700" id="gameProgress">--</div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-3 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">昨日涨跌幅</span>
+              <span id="yesterdayChange" class="font-bold">--</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">昨日净值</span>
+              <span id="yesterdayNet" class="font-bold text-gray-700">--</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">当前净值</span>
+              <span id="currentNet" class="font-bold text-gray-700">--</span>
+            </div>
+          </div>
+
+          <!-- 每日操作模式按钮 -->
+          <div id="dailyActions" class="space-y-2">
+            <div class="flex gap-2">
+              <button id="buyBtn" class="flex-1 bg-rise hover:bg-green-700 text-white font-bold py-2 rounded-lg transition-colors text-sm">买入</button>
+              <button id="sellBtn" class="flex-1 bg-fall hover:bg-red-700 text-white font-bold py-2 rounded-lg transition-colors text-sm">卖出</button>
+              <button id="holdBtn" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition-colors text-sm">持有</button>
+            </div>
+
+            <!-- 买入/卖出输入面板 -->
+            <div id="tradePanel" class="hidden space-y-2 bg-blue-50 rounded-lg p-3">
+              <div id="tradeLabel" class="text-sm font-medium text-gray-600">输入金额</div>
+              <div class="flex gap-2">
+                <input id="tradeAmount" type="number" class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm" placeholder="0">
+                <select id="tradeUnit" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm">
+                  <option value="amount">金额</option>
+                  <option value="percent">百分比</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button id="confirmTradeBtn" class="flex-1 bg-accent text-white text-sm font-bold py-1.5 rounded-lg hover:bg-blue-700 transition-colors">确认</button>
+                <button id="cancelTradeBtn" class="flex-1 bg-gray-200 text-gray-600 text-sm font-bold py-1.5 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
+              </div>
+            </div>
+
+            <button id="nextDayBtn" class="hidden w-full bg-accent hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-colors text-sm">下一天 →</button>
+          </div>
+
+          <!-- 策略模式回测按钮 -->
+          <div id="strategyActions" class="hidden">
+            <button id="runBacktestBtn" class="w-full bg-accent hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-colors">运行回测</button>
+          </div>
+        </div>
+
+        <!-- 持仓信息 -->
+        <div class="bg-white rounded-xl shadow-sm p-4 space-y-2">
+          <h3 class="text-sm font-bold text-gray-700 border-b pb-2">持仓信息</h3>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">现金</span>
+            <span id="cashDisplay" class="font-bold text-gray-700">¥10,000.00</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">持仓份额</span>
+            <span id="sharesDisplay" class="font-bold text-gray-700">0.00</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">持仓市值</span>
+            <span id="marketValueDisplay" class="font-bold text-gray-700">¥0.00</span>
+          </div>
+          <div class="flex justify-between text-sm border-t pt-2">
+            <span class="text-gray-600 font-medium">总资产</span>
+            <span id="totalAssetDisplay" class="font-bold text-lg text-accent">¥10,000.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧主展示区 -->
+      <div class="lg:col-span-2 space-y-4">
+        <!-- 图表 -->
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-gray-700">资产走势</h3>
+            <div class="flex gap-3 text-xs">
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-accent inline-block"></span>总资产</span>
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-gray-400 inline-block"></span>基准(持有不动)</span>
+            </div>
+          </div>
+          <div class="relative" style="height: 300px;">
+            <canvas id="assetChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 今日涨跌展示 (每日操作模式) -->
+        <div id="todayReveal" class="hidden bg-white rounded-xl shadow-sm p-5">
+          <div class="text-center">
+            <div class="text-sm text-gray-400 mb-1">今日结果</div>
+            <div id="todayChangeDisplay" class="text-3xl font-bold mb-2">--</div>
+            <div id="todayNetDisplay" class="text-sm text-gray-500">--</div>
+          </div>
+        </div>
+
+        <!-- 交易记录 -->
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <h3 class="text-sm font-bold text-gray-700 border-b pb-2 mb-3">交易记录</h3>
+          <div id="tradeLog" class="space-y-1 max-h-48 overflow-y-auto text-sm">
+            <div class="text-gray-400 text-center py-4">暂无交易记录</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 游戏结束面板 -->
+    <div id="resultPanel" class="hidden">
+      <div class="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto">
+        <div class="text-center mb-6">
+          <div class="text-5xl mb-3" id="resultEmoji">🎉</div>
+          <h2 class="text-2xl font-bold text-gray-800">游戏结束</h2>
+          <p class="text-gray-500 mt-1" id="resultFundName">--</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="text-xs text-gray-400 mb-1">初始本金</div>
+            <div class="text-lg font-bold text-gray-700" id="resultInitialCash">--</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="text-xs text-gray-400 mb-1">最终资产</div>
+            <div class="text-lg font-bold text-accent" id="resultFinalAsset">--</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="text-xs text-gray-400 mb-1">总收益率</div>
+            <div class="text-lg font-bold" id="resultReturnRate">--</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="text-xs text-gray-400 mb-1">最大回撤</div>
+            <div class="text-lg font-bold text-fall" id="resultMaxDrawdown">--</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="text-xs text-gray-400 mb-1">交易次数</div>
+            <div class="text-lg font-bold text-gray-700" id="resultTradeCount">--</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="text-xs text-gray-400 mb-1">胜率</div>
+            <div class="text-lg font-bold text-gray-700" id="resultWinRate">--</div>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+          <div class="relative" style="height: 250px;">
+            <canvas id="resultChart"></canvas>
+          </div>
+        </div>
+
+        <div class="flex gap-3 justify-center">
+          <button id="playAgainBtn" class="bg-accent hover:bg-blue-700 text-white font-bold py-2.5 px-8 rounded-lg transition-colors">再玩一次</button>
+          <button id="shareBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2.5 px-8 rounded-lg transition-colors">分享战绩</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 规则弹窗 -->
+  <div id="rulesModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">游戏规则</h2>
+        <button id="closeRulesBtn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+      </div>
+      <div class="space-y-3 text-sm text-gray-600">
+        <div>
+          <h3 class="font-bold text-gray-800 mb-1">每日操作模式</h3>
+          <p>选择基金和时间区间后，游戏按日期逐天推进。每天你只能看到前一天的净值和涨跌幅，需要决定：买入（投入金额）、卖出（卖出份额）或持有不动。当天结束后揭示真实涨跌幅。</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-800 mb-1">策略投递模式</h3>
+          <p>预设自动化策略规则（如涨幅超过X%时卖出Y%仓位，跌幅超过X%时买入Z%现金），系统按历史日期全自动回测执行，直接输出回测报告。</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-800 mb-1">数据说明</h3>
+          <p>基金数据来自真实历史净值，由 xalpha 引擎从天天基金网获取。本游戏仅供学习娱乐，不构成任何投资建议。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
