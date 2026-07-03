@@ -7,6 +7,8 @@ const state = {
   initialCash: 10000,
   cash: 10000,
   shares: 0,
+  totalCost: 0,          // 持仓总成本
+  avgCost: 0,            // 持仓均价
   currentIndex: 0,       // 当前推进到的数据索引
   startDateIndex: 0,
   endDateIndex: 0,
@@ -197,6 +199,8 @@ function startGame() {
   state.initialCash = initialCash;
   state.cash = initialCash;
   state.shares = 0;
+  state.totalCost = 0;
+  state.avgCost = 0;
   state.currentIndex = startIdx;
   state.startDateIndex = startIdx;
   state.endDateIndex = endIdx === -1 ? state.fundData.length - 1 : endIdx - 1;
@@ -316,13 +320,16 @@ function confirmTrade() {
     }
     const buyShares = buyAmount / net;
     state.cash -= buyAmount;
+    state.totalCost += buyAmount;
     state.shares += buyShares;
+    state.avgCost = state.shares > 0 ? state.totalCost / state.shares : 0;
     state.trades.push({
       date: today.date,
       type: 'buy',
       amount: buyAmount,
       shares: buyShares,
       net: net,
+      avgCost: state.avgCost,
     });
   } else if (state.pendingAction === 'sell') {
     let sellShares;
@@ -337,13 +344,16 @@ function confirmTrade() {
     }
     const sellAmount = sellShares * net;
     state.cash += sellAmount;
+    state.totalCost -= sellShares * state.avgCost;
     state.shares -= sellShares;
+    state.avgCost = state.shares > 0 ? state.totalCost / state.shares : 0;
     state.trades.push({
       date: today.date,
       type: 'sell',
       amount: sellAmount,
       shares: sellShares,
       net: net,
+      avgCost: state.avgCost,
     });
   }
 
@@ -408,6 +418,8 @@ function runStrategyBacktest() {
 
   let cash = state.initialCash;
   let shares = 0;
+  let totalCost = 0;
+  let avgCost = 0;
   const history = [];
   const dates = [];
   const trades = [];
@@ -424,7 +436,9 @@ function runStrategyBacktest() {
       if (prev.change_pct <= -strategy.dropPct && cash > 0) {
         const buyCash = cash * strategy.buyRatio;
         const buyShares = buyCash / today.net;
+        totalCost += buyCash;
         shares += buyShares;
+        avgCost = shares > 0 ? totalCost / shares : 0;
         cash -= buyCash;
         trades.push({
           date: today.date,
@@ -432,6 +446,7 @@ function runStrategyBacktest() {
           amount: buyCash,
           shares: buyShares,
           net: today.net,
+          avgCost: avgCost,
         });
       }
 
@@ -439,7 +454,9 @@ function runStrategyBacktest() {
       if (prev.change_pct >= strategy.risePct && shares > 0) {
         const sellShares = shares * strategy.sellRatio;
         const sellAmount = sellShares * today.net;
+        totalCost -= sellShares * avgCost;
         shares -= sellShares;
+        avgCost = shares > 0 ? totalCost / shares : 0;
         cash += sellAmount;
         trades.push({
           date: today.date,
@@ -447,6 +464,7 @@ function runStrategyBacktest() {
           amount: sellAmount,
           shares: sellShares,
           net: today.net,
+          avgCost: avgCost,
         });
       }
     }
@@ -458,6 +476,8 @@ function runStrategyBacktest() {
 
   state.cash = cash;
   state.shares = shares;
+  state.totalCost = totalCost;
+  state.avgCost = avgCost;
   state.trades = trades;
   state.assetHistory = history;
   state.benchmarkHistory = new Array(history.length).fill(state.initialCash);
@@ -485,9 +505,23 @@ function updateHoldingsDisplay() {
   const net = state.fundData[idx] ? state.fundData[idx].net : 0;
   const marketValue = state.shares * net;
   const totalAsset = state.cash + marketValue;
+  const profit = state.shares > 0 ? marketValue - state.totalCost : 0;
+  const profitPct = state.totalCost > 0 ? (profit / state.totalCost * 100) : 0;
 
   document.getElementById('cashDisplay').textContent = fmtMoney(state.cash);
   document.getElementById('sharesDisplay').textContent = state.shares.toFixed(2);
+  document.getElementById('avgCostDisplay').textContent = state.shares > 0 ? state.avgCost.toFixed(4) : '--';
+
+  const profitEl = document.getElementById('profitDisplay');
+  if (state.shares > 0) {
+    const sign = profit >= 0 ? '+' : '';
+    profitEl.textContent = `${sign}${fmtMoney(profit)} (${sign}${profitPct.toFixed(2)}%)`;
+    profitEl.className = 'font-bold ' + pctColor(profit);
+  } else {
+    profitEl.textContent = '--';
+    profitEl.className = 'font-bold text-gray-400';
+  }
+
   document.getElementById('marketValueDisplay').textContent = fmtMoney(marketValue);
   document.getElementById('totalAssetDisplay').textContent = fmtMoney(totalAsset);
 }
@@ -504,11 +538,13 @@ function updateTradeLog() {
     const isBuy = t.type === 'buy';
     const color = isBuy ? 'text-rise' : 'text-fall';
     const action = isBuy ? '买入' : '卖出';
+    const avgCostStr = t.avgCost > 0 ? `均价${t.avgCost.toFixed(4)}` : '';
     return `<div class="flex justify-between items-center py-1 px-2 hover:bg-gray-50 rounded">
       <span class="text-gray-400 text-xs">${t.date}</span>
       <span class="${color} font-medium text-xs">${action}</span>
       <span class="text-gray-500 text-xs">${isBuy ? fmtMoney(t.amount) : t.shares.toFixed(2) + '份'}</span>
       <span class="text-gray-400 text-xs">@${t.net.toFixed(4)}</span>
+      <span class="text-gray-400 text-xs">${avgCostStr}</span>
     </div>`;
   }).join('');
 }
@@ -684,6 +720,8 @@ function endGame() {
 function resetGame() {
   state.cash = state.initialCash;
   state.shares = 0;
+  state.totalCost = 0;
+  state.avgCost = 0;
   state.trades = [];
   state.assetHistory = [];
   state.benchmarkHistory = [];
