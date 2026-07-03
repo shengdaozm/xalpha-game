@@ -10,10 +10,19 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,7 +34,7 @@ jobs:
           python-version: '3.10'
       - name: Install dependencies
         run: pip install xalpha pandas
-      - name: Run fetch script
+      - name: Fetch fund data
         run: python scripts/fetch_fund_data.py
       - name: Commit and push
         run: |
@@ -34,3 +43,22 @@ jobs:
           git add data/
           git diff --quiet && git diff --staged --quiet || git commit -m "Auto update fund data"
           git push
+      - name: Pull latest changes after data push
+        run: git pull --rebase
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare static files
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -r assets _site/
+          cp -r config _site/
+          cp -r data _site/
+          touch _site/.nojekyll
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
