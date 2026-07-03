@@ -175,10 +175,17 @@
               <div class="flex gap-2">
                 <input id="tradeAmount" type="number" class="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm" placeholder="0">
                 <select id="tradeUnit" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm">
-                  <option value="amount">金额</option>
+                  <option value="amount">金额/份额</option>
                   <option value="percent">百分比</option>
                 </select>
               </div>
+              <div id="quickSellBtns" class="hidden flex gap-1">
+                <button data-frac="2" class="quick-sell-btn flex-1 bg-white border border-gray-300 text-xs font-medium py-1 rounded hover:bg-accent hover:text-white hover:border-accent transition-colors">1/2</button>
+                <button data-frac="3" class="quick-sell-btn flex-1 bg-white border border-gray-300 text-xs font-medium py-1 rounded hover:bg-accent hover:text-white hover:border-accent transition-colors">1/3</button>
+                <button data-frac="4" class="quick-sell-btn flex-1 bg-white border border-gray-300 text-xs font-medium py-1 rounded hover:bg-accent hover:text-white hover:border-accent transition-colors">1/4</button>
+                <button data-frac="5" class="quick-sell-btn flex-1 bg-white border border-gray-300 text-xs font-medium py-1 rounded hover:bg-accent hover:text-white hover:border-accent transition-colors">1/5</button>
+              </div>
+              <div id="feeHint" class="hidden text-xs text-orange-500"></div>
               <div class="flex gap-2">
                 <button id="confirmTradeBtn" class="flex-1 bg-accent text-white text-sm font-bold py-1.5 rounded-lg hover:bg-blue-700 transition-colors">确认</button>
                 <button id="cancelTradeBtn" class="flex-1 bg-gray-200 text-gray-600 text-sm font-bold py-1.5 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
@@ -216,6 +223,10 @@
           <div class="flex justify-between text-sm">
             <span class="text-gray-500">持仓盈亏</span>
             <span id="profitDisplay" class="font-bold text-gray-700">--</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">累计手续费</span>
+            <span id="totalFeesDisplay" class="font-bold text-orange-500">¥0.00</span>
           </div>
           <div class="flex justify-between text-sm border-t pt-2">
             <span class="text-gray-600 font-medium">总资产</span>
@@ -292,6 +303,10 @@
           <div class="bg-gray-50 rounded-lg p-4 text-center">
             <div class="text-xs text-gray-400 mb-1">胜率</div>
             <div class="text-lg font-bold text-gray-700" id="resultWinRate">--</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4 text-center">
+            <div class="text-xs text-gray-400 mb-1">累计手续费</div>
+            <div class="text-lg font-bold text-orange-500" id="resultTotalFees">--</div>
           </div>
         </div>
 
